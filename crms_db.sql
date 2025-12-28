@@ -1,52 +1,104 @@
 -- Create the Database
-CREATE DATABASE IF NOT EXISTS crms_db;
-USE crms_db;
+CREATE DATABASE IF NOT EXISTS crms_db1;
+USE crms_db1;
 
--- 1. Users Table (Stores Admins and Officers)
+-- 1. Users Table (Stores Admins, Officers, Newscasters)
 CREATE TABLE IF NOT EXISTS users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     full_name VARCHAR(100) NOT NULL,
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'officer') DEFAULT 'officer',
-    status ENUM('active', 'pending') DEFAULT 'pending',
+    role ENUM('admin', 'officer', 'newscaster') DEFAULT 'officer',
+    unit VARCHAR(50) DEFAULT 'General',
+    status ENUM('active', 'pending', 'suspended') DEFAULT 'pending',
+    last_login DATETIME,
+    face_image LONGTEXT, -- For Biometric Features
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Criminals Table (Enhanced with Gender and Status)
+-- 2. Criminals Table (The Core Record)
 CREATE TABLE IF NOT EXISTS criminals (
     criminal_id INT PRIMARY KEY AUTO_INCREMENT,
     full_name VARCHAR(100) NOT NULL,
-    age INT NOT NULL,
-    gender VARCHAR(20) DEFAULT 'Male', -- New Field
+    alias VARCHAR(100),
+    age INT,
+    gender VARCHAR(20) DEFAULT 'Male',
+    height VARCHAR(20),
+    weight VARCHAR(20),
+    eye_color VARCHAR(20),
+    hair_color VARCHAR(20),
+    scars_marks TEXT,
+    nationality VARCHAR(50),
     crime_type VARCHAR(100) NOT NULL,
-    status VARCHAR(50) DEFAULT 'Wanted', -- New Field: Wanted, In Custody, Released
+    status VARCHAR(50) DEFAULT 'Wanted', -- Wanted, In Custody, Solved/Closed
+    risk_level VARCHAR(20) DEFAULT 'Low',
+    gang_affiliation VARCHAR(100),
+    fingerprint_id VARCHAR(50),
+    bail_status VARCHAR(50) DEFAULT 'Not Set',
+    evidence_list TEXT,
     description TEXT,
+    resolution_notes TEXT, -- New: For "Case Solved" details
+    resolution_date DATETIME, -- New: When was it solved?
     mugshot VARCHAR(255) DEFAULT 'default.png',
     added_by INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (added_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
--- 3. Default Admin Account 
--- Login: admin / Password: admin123
--- Note: The hash below is specifically for 'admin123'
-INSERT INTO users (full_name, username, password, role, status) 
-VALUES ('Chief Commander', 'admin', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'admin', 'active');
+-- 3. News Feed Table (For Public Portal)
+CREATE TABLE IF NOT EXISTS news_feed (
+    news_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255),
+    content TEXT,
+    type VARCHAR(50), -- News, Alert, Notice
+    media VARCHAR(255),
+    author_id INT,
+    is_public TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- 4. Sample Officers (For testing "Manage Officers")
--- Login: john / Password: admin123
-INSERT INTO users (full_name, username, password, role, status) VALUES 
-('Officer John Smith', 'john', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'officer', 'active'),
-('Officer Sarah Connor', 'sarah', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'officer', 'active'),
-('Rookie Mike', 'mike', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'officer', 'pending');
+-- 4. Complaints Table (Citizen Reporting)
+CREATE TABLE IF NOT EXISTS complaints (
+    comp_id INT AUTO_INCREMENT PRIMARY KEY,
+    citizen_name VARCHAR(100),
+    contact_info VARCHAR(100),
+    subject VARCHAR(255),
+    details TEXT,
+    status ENUM('Received', 'Investigating', 'Closed') DEFAULT 'Received',
+    assigned_officer INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
--- 5. Sample Criminal Data (To populate Dashboard Charts)
-INSERT INTO criminals (full_name, age, gender, crime_type, status, description, added_by, created_at) VALUES 
-('The Night Stalker', 34, 'Male', 'Theft', 'Wanted', 'Suspect is known for breaking into jewelry stores at midnight. Highly elusive.', 1, NOW()),
-('Victor "Viper" Vance', 29, 'Male', 'Drug Trafficking', 'In Custody', 'Apprehended at the docks with 50kg of illicit substances.', 1, DATE_SUB(NOW(), INTERVAL 2 DAY)),
-('Maria "Black Widow" Cruz', 41, 'Female', 'Homicide', 'Wanted', 'Wanted for the poisoning of three associates. Extremely dangerous.', 1, DATE_SUB(NOW(), INTERVAL 5 DAY)),
-('Cyber Ghost', 22, 'Other', 'Cyber Crime', 'Wanted', 'Hacked into the city municipal database. Identity unknown, goes by alias.', 2, DATE_SUB(NOW(), INTERVAL 10 DAY)),
-('Tommy Vercetti', 35, 'Male', 'Assault', 'Released', 'Served time for bar brawl. Currently on parole.', 1, DATE_SUB(NOW(), INTERVAL 20 DAY)),
-('Eddie Low', 28, 'Male', 'Theft', 'In Custody', 'Caught stealing car radios in downtown district.', 2, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-('Frank Tenpenny', 50, 'Male', 'Fraud', 'Wanted', 'Corrupt activities and money laundering suspects.', 1, DATE_SUB(NOW(), INTERVAL 15 DAY));
+-- 5. Internal Messages (Secure Comms)
+CREATE TABLE IF NOT EXISTS messages (
+    msg_id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT,
+    recipient_role ENUM('all', 'admin', 'officer', 'newscaster'),
+    message TEXT,
+    priority ENUM('Normal', 'Urgent') DEFAULT 'Normal',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Audit Logs (Security Tracking)
+CREATE TABLE IF NOT EXISTS audit_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    action VARCHAR(255),
+    ip_address VARCHAR(45),
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default Admin Account (Pass: admin123)
+INSERT INTO users (full_name, username, password, role, status, unit) 
+VALUES ('Chief Commander', 'admin', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'admin', 'active', 'Command');
+
+-- Sample Data (Officers)
+INSERT INTO users (full_name, username, password, role, status, unit) VALUES 
+('Officer John Smith', 'john', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'officer', 'active', 'Patrol'),
+('Det. Sarah Connor', 'sarah', '$2y$10$SfhYIDtn.iSyCo8Rlc31..Kclk9RHH.pwI91.w4q.qXp.j/0.m.C6', 'officer', 'active', 'Cyber');
+
+-- Sample Data (Criminals)
+INSERT INTO criminals (full_name, alias, age, gender, crime_type, status, risk_level, description, added_by, created_at) VALUES 
+('The Night Stalker', 'Shadow', 34, 'Male', 'Theft', 'Wanted', 'High', 'Breaking into jewelry stores at midnight.', 1, NOW()),
+('Victor Vance', 'Viper', 29, 'Male', 'Drug Trafficking', 'In Custody', 'Extreme', 'Apprehended at docks.', 1, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+('Maria Cruz', 'Widow', 41, 'Female', 'Homicide', 'Wanted', 'Extreme', 'Wanted for poisoning associates.', 1, DATE_SUB(NOW(), INTERVAL 5 DAY));
