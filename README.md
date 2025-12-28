@@ -1,181 +1,164 @@
-
 PROJECT DOCUMENTATION
-Criminal Record Management System (CRMS)
-Version: 1.0 (Beta) Date: December 28, 2025 Department: Computer Science / Information Technology
+National Crime Bureau (NCB) Integrated System
+Public Intelligence Portal & Secure Record Management
+Project Name: NCB Portal (CRMS v19.0) Type: Enterprise Web Application (Dual Interface) Date: December 2025 Department: Computer Science / Cyber Security
 
 1. Executive Summary
-The Criminal Record Management System (CRMS) is a web-based enterprise application designed to modernize and digitize the record-keeping operations of law enforcement agencies. Traditional police record-keeping often relies on physical files, which are prone to damage, loss, and slow retrieval speeds. CRMS addresses these challenges by providing a centralized, secure digital database where authorized personnel can manage criminal profiles efficiently.
+The National Crime Bureau (NCB) Portal is a sophisticated, dual-layer web application designed to bridge the gap between law enforcement operations and public safety awareness. Unlike traditional record-keeping systems, the NCB Portal features two distinct interfaces:
 
-The system currently supports two primary roles: Administrators (Chief Commanders) and Officers. It features a robust security layer including role-based access control (RBAC), password encryption, and a "Gatekeeper" approval system for new accounts. Future iterations of the project will expand to include a public-facing News Portal and a Newscaster role to facilitate community safety alerts.
+Public Intelligence Dashboard (index.php): A transparency-focused portal for citizens to view real-time crime statistics, "Most Wanted" lists, and official news updates.
 
-2. Mission & Vision
-2.1 Mission Statement
-"To empower law enforcement with a secure, reliable, and efficient digital infrastructure that streamlines the documentation of criminal activities, ensures the integrity of sensitive data, and fosters transparency between the police force and the community."
+Secure Internal Network (login.php): An encrypted backend for Officers, Newscasters, and Commanders to manage case files, publish news, and track personnel.
 
-2.2 Project Vision
-To become the standard for digital policing, creating a unified platform where internal investigations and public safety announcements coexist seamlessly.
+The system introduces advanced features such as Biometric Data Fields, Math-Challenge Security, Audit Logging, and a News Desk module, ensuring a modern approach to digital policing.
 
-3. System Features & Functional Modules
-The application is divided into three core modules: Authentication, Administration, and Operations.
+2. System Architecture
+The system operates on a Role-Based Access Control (RBAC) architecture with strict separation between public and private data.
 
-3.1 Authentication & Security Module
-Secure Login Portal: A unified entry point that authenticates users based on their username and password.
+2.1 Public Front-End (index.php)
+Purpose: Information dissemination and community engagement.
 
-Registration with Approval Gate: New users can register for an account, but they are assigned a pending status by default. They cannot access the system until an Admin explicitly approves them.
+Key Components:
 
-Session Management: The system uses PHP sessions (session_start()) to maintain user state. Unauthorized attempts to access internal pages (like the dashboard) redirect the user back to the login screen.
+Live Analytics: Visualizes data using Chart.js to show crime distribution (Wanted vs. Solved).
 
-Logout Protocol: Securely destroys the user session to prevent unauthorized access on shared devices.
+News Ticker: Displays breaking news and alerts fetched from the news_feed table.
 
-3.2 Administrator Module ("Chief Commander")
-The Administrator holds the highest level of authority in the system.
+Crime Mapping: Integration of Leaflet.js for geospatial visualization of crime hotspots.
 
-Dashboard Analytics: Provides a real-time overview of the department's status, including:
+Smart Image Loading: Uses DiceBear API to generate avatars for records missing mugshots, ensuring a consistent UI.
 
-Total Criminal Records.
+2.2 Secure Back-End (login.php)
+Purpose: Operational management and data entry.
 
-Number of Active Officers.
+Key Components:
 
-Pending Approvals Alert: A specific counter visible only to Admins.
+Authentication Gate: Requires Username, Password, and a Math Captcha.
 
-Officer Management: A dedicated interface (?page=officers) to view all registered users who are currently pending.
+Dashboard: Provides officers with immediate operational awareness (e.g., "Active Warrants", "Weather Widget").
 
-One-Click Approval: Admins can activate an officer's account by clicking "Approve," which updates the user's status in the database from pending to active.
+News Desk: A dedicated CMS for Newscasters to write and publish articles.
 
-3.3 Police Officer Module
-This module is designed for daily operational use by field officers.
+3. User Roles & Capabilities
+The system now supports three distinct internal roles defined in the users database table.
 
-Add Criminal Profile: A comprehensive form allows officers to input:
+3.1 Administrator ("Chief Commander")
+Access Level: Supreme.
 
-Personal Details: Name, Age.
+Exclusive Rights:
 
-Crime Classification: Dropdown selection (Theft, Assault, Fraud, Homicide, etc.).
+Staff Management: Can approve pending accounts, suspend officers, and view active personnel units.
 
-Case Description: Detailed text area for case notes.
+Full Oversight: Access to all records, news, and audit logs.
 
-Evidence Management: Functionality to upload and store digital mugshots of the suspect.
+Dashboard: Sees the "Pending Approvals" counter to manage recruitment.
 
-Search & Retrieval: A robust search engine allows officers to filter the criminal database by Name or Crime Type using SQL pattern matching.
+3.2 Police Officer
+Access Level: Operational.
 
-Visual Database: The record view displays the suspect's mugshot alongside their crime details for quick visual identification.
+Capabilities:
 
-4. Technical Architecture
-4.1 Frontend (User Interface)
-HTML5: Provides the semantic structure of the application.
+Add/Edit Records: Can create detailed criminal profiles including physical attributes (scars, tattoos), biometric references (fingerprint ID), and evidence lists.
 
-Tailwind CSS: A utility-first CSS framework used for styling.
+Search Database: Can query the criminals table to find suspects by name or alias.
 
-Glassmorphism: The login interface features a modern, translucent design (glass-effect class) for a professional aesthetic.
+Restrictions: Cannot access the "News Desk" or "Staff Management".
 
-Responsiveness: The layout adapts to different screen sizes, with a collapsible sidebar and grid-based dashboard.
+3.3 Newscaster (Media/Press)
+Access Level: Information Only.
 
-FontAwesome (v6.4.0): Integration of vector icons (Handcuffs, Shields, User Gear) to enhance User Experience (UX).
+Capabilities:
 
-4.2 Backend (Server Logic)
-Language: PHP (Vanilla).
+News Desk: Access to a specialized form to publish Headlines, Alerts, or Public Notices.
 
-Core Logic:
+Media Upload: Can upload news-related images to the public feed.
 
-Routing: A single-page application structure where the ?page= parameter determines which content to load.
+Security Restriction: Strictly blocked from viewing the Criminal Database. Attempts to access records result in an "ACCESS RESTRICTED" security warning.
 
-File Handling: Utilizes move_uploaded_file() to securely transfer images from the user's computer to the server's uploads/ directory.
+4. Database Design & Schema
+The database (crms_db1) has been expanded to support complex operations.
 
-4.3 Database (Storage)
-Engine: MySQL / MariaDB.
+4.1 Core Tables
+Table: users | Column | Type | Purpose | | :--- | :--- | :--- | | role | ENUM | Defines permission level ('admin', 'officer', 'newscaster'). | | status | ENUM | Controls login access ('active', 'pending', 'suspended'). | | face_image | LONGTEXT | Stores biometric facial data for future recognition features. |
 
-Structure: Relational Database with normalized tables to ensure data consistency and reduce redundancy.
+Table: criminals (Enhanced) | Column | Type | Purpose | | :--- | :--- | :--- | | risk_level | VARCHAR | Color-coded threat assessment (Low/Medium/High). | | fingerprint_id | VARCHAR | Link to biometric fingerprint databases. | | gang_affiliation | VARCHAR | Tracks organized crime connections. |
 
-5. Database Design & Schema
-5.1 Entity Relationship Diagram (ERD)
-The database consists of two primary tables linked by a Foreign Key relationship.
+Table: news_feed (New) | Column | Type | Purpose | | :--- | :--- | :--- | | type | VARCHAR | Categorizes posts (News, Alert, Notice) to determine UI color (Red for Alerts). | | is_public | TINYINT | Toggle visibility on the main portal. |
 
-[INSERT SCREENSHOT OF ERD OR PHPMYADMIN HERE]
+Table: audit_logs (Security) | Column | Type | Purpose | | :--- | :--- | :--- | | action | VARCHAR | Records what happened (e.g., "Login Successful", "Published News"). | | ip_address | VARCHAR | Tracks the IP origin of the user for forensic analysis. |
 
-5.2 Table Definitions
-Table 1: users Handles authentication and authorization.
+5. Key Functional Modules
+5.1 The "News Desk" Module
+Logic: A Content Management System (CMS) embedded within the secure portal.
 
-user_id (INT, Primary Key): Unique identifier.
+Workflow:
 
-username (VARCHAR): Unique login credential.
+Newscaster logs in.
 
-password (VARCHAR): Hashed security string.
+Navigates to ?page=news_desk.
 
-role (ENUM): 'admin' or 'officer'.
+Selects type (e.g., "Emergency Alert").
 
-status (ENUM): 'active' or 'pending'. Critical for the approval system.
+Submits content.
 
-Table 2: criminals Stores criminal case data.
+The system saves it to news_feed, and index.php immediately renders it on the Public Portal under the "Breaking News" ticker.
 
-criminal_id (INT, Primary Key): Unique case number.
+5.2 The "Pending Approval" Workflow
+Logic: Security by default.
 
-full_name (VARCHAR): Name of the suspect.
+Process:
 
-crime_type (VARCHAR): Category of offense.
+User registers via login.php?page=register.
 
-mugshot (VARCHAR): File path to the stored image.
+Database inserts row with status = 'pending'.
 
-added_by (INT, Foreign Key): Links to users.user_id. This creates an Audit Trail, allowing Admins to track which officer filed a specific record.
+User sees "Application Sent" message.
+
+Admin logs in, sees "Yellow Card" notification for pending users.
+
+Admin clicks "Approve", updating status to active.
 
 6. Security Architecture
-Security is a cornerstone of the CRMS project. The following measures have been implemented to protect sensitive police data.
+The system implements defense-in-depth strategies.
 
-6.1 Password Hashing (Bcrypt)
-The system does not store passwords in plain text.
+6.1 Anti-Bot Verification (Math Captcha)
+Mechanism: The login session generates two random numbers ($_SESSION['c_n1'], $_SESSION['c_n2']).
 
-Implementation: During registration, password_hash() converts the password into a secure hash. During login, password_verify() checks the input against this hash. This ensures that even if the database is stolen, user passwords remain secure.
+Validation: The user must calculate the sum. If (int)$_POST['captcha'] does not match the session sum, the login is rejected with "Security Check Failed".
 
-6.2 SQL Injection Prevention
-Threat: Attackers inserting malicious code into input fields.
+6.2 Session Hijacking Protection & IP Logging
+Mechanism: session_regenerate_id(true) is called upon successful login to prevent session fixation attacks.
 
-Defense: The system applies $conn->real_escape_string() to all user inputs ($_POST data) before interacting with the database. This neutralizes special characters that could alter SQL queries.
+Audit Trail: Every critical action (Login, Logout, Publish News) triggers the logAction() function, which records the user ID, Action, and IP Address into the audit_logs table.
 
-6.3 The "Pending" Trap (Access Control)
-Feature: Valid credentials alone are insufficient for access.
+6.3 Input Sanitization
+Defense: All inputs are processed through a custom sanitize() function which applies htmlspecialchars() and $conn->real_escape_string(). This neutralizes Cross-Site Scripting (XSS) and SQL Injection attacks.
 
-Logic: The login script checks if ($row['status'] == 'active'). If a user is pending, they are denied entry with an error message ("Account pending Admin approval"). This prevents unauthorized access immediately after registration.
+7. Technical Stack
+Frontend Framework: Tailwind CSS (configured with darkMode: 'class' for night-ops aesthetic).
 
-6.4 File Upload Security
-Renaming Strategy: Uploaded images are renamed using the current timestamp (time()) to prevent file overwriting and obscure the original filename.
+Visualization: Chart.js (Donut charts for case status), Leaflet.js (Map interface).
 
-7. Future Work: The News & Public Information Module
-To fully realize the project vision, the following features are planned for Version 2.0.
+Backend: PHP 8.0+ (Vanilla, Session-based).
 
-7.1 The Newscaster Role
-A new user role (role = 'newscaster') will be introduced.
+Database: MySQL / MariaDB (Relational).
 
-Responsibilities: Newscasters will access a restricted Content Management System (CMS) to publish news. They will have zero access to the criminal records database.
-
-7.2 Public Homepage (home.php)
-A publicly accessible landing page (no login required).
-
-Internal News Feed: Displays articles and safety alerts posted by the Newscasters.
-
-External News API: Integration with a third-party API (e.g., NewsAPI.org) to fetch and display a live ticker of global "Crime & Safety" news.
-
-Most Wanted List: A filtered, read-only view of the criminals table showing only "High Severity" fugitives to enlist public help.
+Assets: FontAwesome v6.4 (Icons), Unsplash API (Backgrounds), DiceBear API (Dynamic Avatars).
 
 8. Conclusion
-The Criminal Record Management System (v1.0) successfully demonstrates a secure, functional backend for police administration. By leveraging PHP and MySQL, the system allows for the seamless creation, retrieval, and management of criminal data. The implementation of strict role-based access control and the "Admin Approval" workflow ensures that the system maintains a high standard of security. The planned addition of the News Module will further enhance the system's value by integrating community engagement.
+The NCB Portal v19.0 represents a significant leap forward from standard CRUD applications. By integrating a public-facing news engine with a high-security internal record system, it serves the dual purpose of keeping the public informed while giving officers the tools they need to solve crimes. The addition of the Newscaster role and Audit Logging ensures the system is enterprise-ready and compliant with modern security standards.
 
 9. References
-Codebase:
+System Files: index.php (Public Portal), login.php (Secure Portal), crms_db.sql (Database Schema).
 
-index.php: Main application logic (Authentication, Dashboard, CRUD operations).
+Libraries:
 
-database.sql: Database schema definition.
+Tailwind CSS: https://tailwindcss.com/
 
-Documentation & Manuals:
+Chart.js: https://www.chartjs.org/
 
-PHP Manual: Session Handling, Password Hashing (password_hash), MySQLi Extensions. https://www.php.net/docs.php
+Leaflet Maps: https://leafletjs.com/
 
-MySQL Reference: AUTO_INCREMENT, Foreign Keys, ENUM Data Types. https://dev.mysql.com/doc/
+DiceBear Avatars: https://dicebear.com/
 
-Frontend Libraries:
-
-Tailwind CSS: Utility-first CSS framework for design and layout. https://tailwindcss.com/
-
-FontAwesome: Icon toolkit (v6.4.0). https://fontawesome.com/
-
-Security Standards:
-
-OWASP: Guidelines on SQL Injection Prevention and Password Storage. https://owasp.org/
+Security Standards: OWASP Session Management Guidelines.
